@@ -1,6 +1,6 @@
 <?php
     // Functie: programma login OOP 
-    // Auteur: Studentnaam
+    // Auteur: jayden sadhoe
 
     // Initialisatie
     include 'classes/User.php';

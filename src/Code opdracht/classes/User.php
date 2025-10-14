@@ -1,143 +1,177 @@
 <?php
-    // Functie: classdefinitie User 
-    // Auteur: Studentnaam
+// Functie: classdefinitie User 
+// Auteur: Jayden Sadhoe
 
-    class User{
+class User {
 
-        // Eigenschappen 
-        public string $username = "";
-        public string $email = "";
-        private string $password = "";
-        
-        function setPassword($password){
+    // ====== Eigenschappen ======
+    public string $username = "";
+    private string $password = "";
+
+    // ====== Setters & Getters ======
+    public function setPassword(string $password, bool $hash = true) {
+        // Wachtwoord hashen alleen bij registratie
+        if ($hash) {
+            $this->password = password_hash($password, PASSWORD_DEFAULT);
+        } else {
             $this->password = $password;
         }
-        function getPassword(){
-            return $this->password;
+    }
+
+    public function getPassword(): string {
+        return $this->password;
+    }
+
+    // ====== Gebruiker tonen ======
+    public function showUser() {
+        echo "<br>Username: $this->username <br>";
+    }
+
+    // ====== Gebruikersvalidatie ======
+    public function validateUser(): array {
+        $errors = [];
+
+        // Check of username leeg is
+        if (empty($this->username)) {
+            $errors[] = "Gebruikersnaam mag niet leeg zijn.";
+        } 
+        // Controleer lengte van de username
+        else if (strlen($this->username) < 3 || strlen($this->username) > 50) {
+            $errors[] = "Gebruikersnaam moet tussen 3 en 50 tekens lang zijn.";
         }
 
-        public function showUser() {
-            echo "<br>Username: $this->username<br>";
-            echo "<br>Password: $this->password<br>";
-            echo "<br>Email: $this->email<br>";
-            
+        // Check of password leeg is
+        if (empty($this->password)) {
+            $errors[] = "Wachtwoord mag niet leeg zijn.";
         }
 
-        public function registerUser() : array {
-            $status = false;
-            $errors=[];
-            if($this->username != ""){
+        // Controleer minimale lengte wachtwoord
+        else if (strlen($this->password) < 5) {
+            $errors[] = "Wachtwoord moet minstens 5 tekens bevatten.";
+        }
 
-                // Check user exist in database
-                
-                if(true){
-                    array_push($errors, "Username bestaat al.");
-                } else {
-                    // username opslaan in tabel login
-                    // INSERT INTO `user` (`username`, `password`, `role`) VALUES ('kjhasdasdkjhsak', 'asdasdasdasdas', '');
-                    // Manier 1
-                    
-                    $status = true;
-                } 
-            }
+        return $errors;
+    }
+
+    // ====== Gebruiker registreren ======
+    public function registerUser(): array {
+        $errors = [];
+        $db = $this->dbConnect();
+
+        if ($db === null) {
+            $errors[] = "Databaseverbinding mislukt.";
             return $errors;
         }
-function validateLogin() {
-    $errors = [];
 
-    // Check of username leeg is
-    if (empty($this->username)) {
-        array_push($errors, "Invalid username");
-    } 
-    // Check of password leeg is
-    else if (empty($this->password)) {
-        array_push($errors, "Invalid password");
-    }
-
-    // Check lengte username (tussen 3 en 50 tekens)
-    if (!empty($this->username)) {
-        $length = strlen($this->username);
-        if ($length < 3 || $length > 50) {
-            array_push($errors, "Username must be between 3 and 50 characters long");
+        // Valideer gebruikersinvoer
+        $validationErrors = $this->validateUser();
+        if (!empty($validationErrors)) {
+            return $validationErrors;
         }
-    }
 
-    return $errors;
-}
-        public function loginUser(): bool {
+        // Controleer of de gebruikersnaam al bestaat
+        $sql = "SELECT * FROM users WHERE username = :username";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':username', $this->username);
+        $stmt->execute();
 
-            // Connect database
-            $db = $this->dbConnect();
-            if ($db === null) {
-                return false; // Database connection failed
-            }
+        if ($stmt->rowCount() > 0) {
+            $errors[] = "Gebruikersnaam bestaat al.";
+        }
 
-            // Zoek user in de table user met username = $this->username
-           $username = $this->username;
-           $password = $this->password;
-
-
-            // Doe SELECT * from user WHERE username = $this->username
-            $sql = "SELECT * FROM user WHERE username = :username";
+        // Indien geen fouten → registreer gebruiker
+        if (count($errors) === 0) {
+            $sql = "INSERT INTO users (username, password) VALUES (:username, :password)";
             $stmt = $db->prepare($sql);
-            if ($stmt === false) {
-                return false; // SQL preparation failed
+            $stmt->bindParam(':username', $this->username);
+            $stmt->bindParam(':password', $this->password);
+
+            if ($stmt->execute()) {
+                return []; // Geen fouten = succes
+            } else {
+                $errors[] = "Registratie mislukt.";
             }
-
-
-            // Indien gevonden EN password klopt dan sessie vullen
-            $_SESSION['username'] = $this->username;
-            $_SESSION['loggedin'] = true;
-
-            // Return true indien gelukt anders false
-            return true;
         }
 
-        // Check if the user is already logged in
-        public function isLoggedin(): bool {
-            // Check if user session has been set
-            
+        return $errors;
+    }
+
+    // ====== Inloggen ======
+    public function loginUser(): bool {
+        session_start();
+        $db = $this->dbConnect();
+
+        if ($db === null) {
             return false;
         }
 
-        public function getUser(string $username): bool {
-            // Connect database
+        $sql = "SELECT * FROM users WHERE username = :username";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':username', $this->username);
+        $stmt->execute();
 
-		    // Doe SELECT * from user WHERE username = $username
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (false){
-                //Indien gevonden eigenschappen vullen met waarden uit de SELECT
-                $this->username = 'Waarde uit de database';
-                return true;
-            } else {
-                return false;
-            }   
+        if ($user && password_verify($this->password, $user['password'])) {
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['loggedin'] = true;
+            return true;
+        } else {
+            return false;
         }
-
-        public function logout(){
-            session_start();
-            // remove all session variables
-           
-
-            // destroy the session
-            
-
-        }
-        public function dbConnect(){
-            $server = "localhost"; 
-            $username = "root";
-            $password = ""; 
-            $db = "inlog";
-            try {
-              $dbConnection = new PDO("mysql:host=$server; dbname=$db", $username, $password);
-              $dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-              return $dbConnection;
-            } catch (PDOException $e) {
-              echo "Verbinding mislukt" . $e->getMessage();
-              return null;
-            }
-        }
-
     }
 
+    // ====== Ingelogd controleren ======
+    public function isLoggedin(): bool {
+        
+        return isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true;
+    }
+
+    // ====== Gebruiker ophalen uit DB ======
+    public function getUser(string $username): bool {
+        $db = $this->dbConnect();
+        if ($db === null) {
+            return false;
+        }
+
+        $sql = "SELECT * FROM users WHERE username = :username";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':username', $username);
+        $stmt->execute();
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            $this->username = $user['username'];
+            $this->password = $user['password'];
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // ====== Uitloggen ======
+    public function logout() {
+    
+        $_SESSION = [];
+        session_destroy();
+    }
+
+    // ====== Database connectie ======
+    public function dbConnect() {
+        $server = "localhost"; 
+        $username = "root";
+        $password = ""; 
+        $db = "inlog";
+
+        try {
+            $dbConnection = new PDO("mysql:host=$server;dbname=$db", $username, $password);
+            $dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $dbConnection;
+        } catch (PDOException $e) {
+            echo "Verbinding mislukt: " . $e->getMessage();
+            return null;
+        }
+    }
+}
 ?>

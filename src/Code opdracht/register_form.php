@@ -1,6 +1,6 @@
 <?php
 	// Functie: programma login OOP 
-    // Auteur: Studentnaam
+    // Auteur: jayden sadhoe
 	require_once('classes/User.php');
 
 	$user = new User();
@@ -11,7 +11,6 @@
 		
 		// Gegevens uit formulier halen
 		$user->username = $_POST['username'];
-		$user->email = $_POST['email'];
 		$user->setPassword($_POST['password']);
 
 		// Validatie gegevens
@@ -58,10 +57,6 @@
 				<div>
 					<label>Username</label>
 					<input type="text"  name="username" />
-				</div>
-				<div>
-					<label>email</label>
-					<input type="email"  name="email" />
 				</div>
 				<div >
 					<label>Password</label>
