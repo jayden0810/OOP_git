@@ -79,20 +79,20 @@ class House {
 // --- Test code voor meerdere huisen ---
 
 // Huis 1
-$house1 = new House("Family House", 300);
+$house1 = new House("Family House", 3000);
 $house1->addRoom(new Room("Living room", 5.2, 5.1, 5.5));
 $house1->addRoom(new Room("Bedroom", 4.8, 4.6, 4.9));
 $house1->addRoom(new Room("Bathroom", 5.9, 2.5, 3.1));
 
 // Huis 2
-$house2 = new House("Luxury Villa", 500);
+$house2 = new House("Luxury Villa", 3000);
 $house2->addRoom(new Room("Living room", 8.0, 6.0, 5.5));
 $house2->addRoom(new Room("Master Bedroom", 6.5, 5.5, 4.9));
 $house2->addRoom(new Room("Bathroom", 4.0, 3.0, 3.2));
 $house2->addRoom(new Room("Guest Room", 5.0, 4.0, 4.5));
 
 // Huis 3
-$house3 = new House("Small Cottage", 150);
+$house3 = new House("Small Cottage", 3000);
 $house3->addRoom(new Room("Living room", 4.0, 3.5, 3.8));
 $house3->addRoom(new Room("Bedroom", 3.5, 3.0, 3.5));
 $house3->addRoom(new Room("Bathroom", 2.5, 2.0, 2.5
